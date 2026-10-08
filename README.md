@@ -4,7 +4,7 @@ Stow is a personal Obsidian plugin project exploring a desktop card board for re
 
 ## Initial POC
 
-- Create, find, and switch between Canvas boards stored in `/stow`, with one active board at a time.
+- Create, find and switch between Canvas boards stored in `/stow`, with one active board at a time.
 - Browse, pan, and resize native Canvas file cards; layout changes persist without moving or changing unrelated cards.
 - Create and edit standalone card notes in `/stow/cards`; card notes remain readable and editable in Obsidian without Stow.
 - Remove a card with its Remove action; its Canvas node and card note are deleted, while referenced media files remain.
