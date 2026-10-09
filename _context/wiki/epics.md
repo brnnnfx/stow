@@ -35,7 +35,7 @@ The [POC feature specification](../../delivery/specs/poc/feature-spec.md) is the
 
 **Acceptance criteria:**
 
-- Creating a card creates a standalone Markdown note and a native Canvas file card that references it.
+- Creating a card creates a standalone Markdown note named `YYYY-MM-DD-HHmm-stow.md` using 24-hour local time and a native Canvas file card that references it.
 - Card content can be edited in Stow or directly in Obsidian and remains coherent in both places.
 - An explicit Remove action deletes the Canvas node and its Markdown note in `/stow/cards`, while retaining media files referenced by the card.
 - Canvas layout and unrelated nodes are preserved when card content or membership changes.
@@ -68,14 +68,14 @@ The [POC feature specification](../../delivery/specs/poc/feature-spec.md) is the
 
 ## Cross-Cutting Acceptance Criteria
 
-- Define supported Obsidian desktop versions and operating systems before release.
+- Validate on the latest macOS, Windows, and Ubuntu releases and the latest Obsidian desktop version only; no backward compatibility is required. As of 2026-10-08, Obsidian is version 1.13.7.
 - Handle renamed or missing notes and media without data loss.
 - Add focused tests for Canvas JSON and Markdown transformations, plus integration checks for file updates and layout preservation.
 - Target 100% function coverage for in-scope, unit-testable production logic; report statement/line and branch coverage separately. Confirm whether React and Jest fit the Obsidian plugin setup.
-- Provisional performance targets are a usable 100-card board within 3 seconds and tag-filter updates within 500 milliseconds on an agreed reference desktop.
+- Exploratory POC targets are to observe board readiness within 3 seconds for a 100-card fixture and tag-filter updates within 500 milliseconds. These are not release gates; record the machine and environment used without preselecting a reference computer.
 
 ## Dependencies and Open Decisions
 
 The interoperability spike comes first. Board access depends on its findings; card authoring depends on board access and the note-backed card model. Media and tag work depend on the Markdown representation established for cards and can proceed after the card lifecycle is stable.
 
-Still to decide: card-note filename and conflict rules; whether selecting a filesystem file copies it into `/stow/files` or links to its external path; tag syntax; the performance reference computer; and which Obsidian version to test on the agreed OS releases.
+Still to decide: behavior when the generated timestamp filename collides; whether selecting a filesystem file copies it into `/stow/files` or links to its external path; and tag syntax.

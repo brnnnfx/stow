@@ -59,7 +59,7 @@ None. This epic should complete before committing to the plugin's Canvas integra
 
 ## Unit Tests
 
-This is primarily a manual spike. If reusable Canvas or Markdown transformation code is produced, add unit tests for parsing and serializing representative Canvas fixtures, resolving file-card references, and preserving node geometry and unrelated data during updates. Prefer Jest if it fits the eventual TypeScript setup; target 100% unit coverage for this pure logic, with the coverage metric and exclusions documented. Do not create tests solely to inflate coverage for discarded spike code.
+This is primarily a manual spike. If reusable Canvas or Markdown transformation code is produced, add unit tests for parsing and serializing representative Canvas fixtures, resolving file-card references, and preserving node geometry and unrelated data during updates. Prefer Jest if it fits the eventual TypeScript setup; target 100% function coverage for in-scope, unit-testable logic and report statement/line and branch coverage separately. Do not create tests solely to inflate coverage for discarded spike code.
 
 ## Manual Validation
 
@@ -71,6 +71,6 @@ This is primarily a manual spike. If reusable Canvas or Markdown transformation 
 
 ## Open Decisions
 
-- Which Obsidian desktop versions and operating systems must the spike cover?
+- Record the latest Obsidian desktop version and latest macOS, Windows, and Ubuntu releases used for the spike; older Obsidian versions are out of scope.
 - What supported integration surface can Stow use to open and update Canvas files?
 - Can tag filtering meet the POC goal while retaining the native Canvas view and saved layout?
