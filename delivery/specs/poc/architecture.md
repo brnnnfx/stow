@@ -5,126 +5,120 @@
 
 ## Purpose
 
-This document describes a simple local architecture for the Stow POC using a React frontend, a Node.js backend, SQLite, and files in a local application folder. It covers the board and card workflows, media references, tags and filtering, and simulated PDF/DOCX reading. It is an architecture overview, not an API specification, database schema, or implementation plan.
+Describe the system context, major responsibilities, data flow, and key decisions for the Stow Obsidian desktop plugin POC. The architecture centers on native Canvas boards and standalone Markdown card notes stored in the current vault. It is an architecture overview, not an API design, database schema, or implementation plan.
 
 ## System context
 
-The POC is a single-user application running on the user's computer. The user works with boards and note-backed cards through the React UI. A local Node.js process coordinates application behavior and is the only component that reads and writes SQLite or the application's files.
+Stow runs as a plugin within Obsidian desktop and is used by an individual vault user. Obsidian provides the plugin runtime, workspace, Canvas experience, and vault file operations. Stow provides the workflows for discovering and switching boards, managing note-backed cards and media references, editing tags, and filtering the active board.
 
-The application has no authentication, roles, remote services, or shared server. Its durable state is kept locally:
+Stow-managed content is stored as normal files in the current vault:
 
-- SQLite stores application metadata and board/card relationships.
-- The application's data folder stores board/card content and media files.
-- PDF and DOCX reading is simulated; the application does not parse document contents.
+- Canvas boards directly in `/stow`.
+- Standalone Markdown card notes in `/stow/cards`.
+- Media imported through Stow in `/stow/files`.
 
-The feature specification describes an Obsidian desktop plugin, native Canvas files, and vault-managed storage. The requested runtime and storage constraints instead describe a standalone local application. Consequently, this architecture preserves the core board/card workflows but does not assume an Obsidian runtime or promise native Canvas/vault interoperability. This is a material scope decision that requires review (see [Assumptions and decisions for human review](#assumptions-and-decisions-for-human-review)).
-
-## Major components
+Existing vault media is referenced in place. Obsidian's existing storage, synchronization, and sharing behavior applies; Stow does not provide separate controls for these.
 
 ```text
 User
   |
-React frontend
-  | local application boundary
-Node.js backend
-  |                     |
-SQLite metadata      Local application folder
-                      (board/card files and media)
+Obsidian desktop
+  |-- Stow plugin workflows and controls
+  |-- Native Canvas board and file-card experience
+  |-- Vault files
+      |-- /stow/*.canvas
+      |-- /stow/cards/*.md
+      |-- /stow/files/*
 ```
 
-### React frontend
+## Major components
 
-- Presents the board list, one active board, card editing, media selection, tag controls, and tag filters.
-- Renders the board and its cards, including navigation and resizing.
-- Shows unresolved file references, unsupported media, name conflicts, and other operation errors.
-- Keeps transient UI state, such as the current filter selection, in the frontend; it does not persist filtering as a board change.
-- Presents a simulated PDF/DOCX reading experience without claiming to extract or understand real document contents.
+### Obsidian host
 
-### Node.js backend
+- Hosts and activates the Stow plugin in the desktop application.
+- Provides the workspace and native Canvas behavior, including pan, scroll, and resizing of file cards.
+- Owns the vault's file operations and existing storage, synchronization, and sharing behavior.
 
-- Owns application behavior and is the boundary between the UI, SQLite, and local files.
-- Loads and saves boards and cards, applies tag matching, and coordinates media references.
-- Validates operations that could overwrite or delete data. It reports conflicts instead of silently replacing files.
-- Simulates document-reading results; it does not invoke a real PDF/DOCX parser or external intelligence service.
-- Does not expose or depend on a separately deployed remote service.
+### Stow plugin workflows
 
-### SQLite persistence
+- Provides entry points through an Obsidian command and sidebar.
+- Discovers and presents boards under `/stow`, and maintains one active Stow board at a time.
+- Coordinates board and card operations with the vault and Canvas.
+- Presents errors and unresolved references without silently substituting, overwriting, or deleting unrelated files.
 
-- Stores structured application metadata, including board/card identity, relationships, tags, and saved board layout.
-- Is accessed only by the Node.js backend.
-- Does not store binary media or replace the user-readable card content files.
-- Is used for local persistence only; no synchronization or multi-user coordination is provided.
+### Board and Canvas integration
 
-### Local file storage
+- Represents each board as a native Obsidian Canvas file stored directly in `/stow`.
+- Adds and removes native Canvas file-card nodes that reference standalone Markdown notes.
+- Preserves each node's identity and saved layout when card content changes; board layout changes are saved as Canvas changes.
+- Applies tag filtering as a view operation, leaving saved Canvas membership and layout unchanged.
 
-- Stores user-readable board/card content and media beneath an application-managed data folder.
-- Uses separate locations for boards, card notes, and uploaded media, following the feature spec's `/stow`, `/stow/cards`, and `/stow/files` organization where applicable.
-- Keeps media separate from note content. Existing local media may be referenced in place; imported media is copied into the application's media location and referenced from the card.
-- Retains media when a card or media reference is removed. Removing a card removes its associated card content and board membership only after an explicit user action.
-- Does not manage backups, synchronization, or sharing.
+### Card content and tags
+
+- Represents each card as a standalone Markdown note in `/stow/cards`, readable and editable in Obsidian without Stow.
+- Supports the specified text and links, image and animated GIF references, and freeform tags.
+- Keeps tag changes local to the relevant card note; provides access to existing vault tags for reuse.
+
+### Media handling
+
+- References existing vault media in place.
+- Stores imported supported media as separate files in `/stow/files` and references those files from card notes.
+- Removes a media reference without deleting its underlying asset; retains referenced or uploaded media when a card is removed.
 
 ## Component responsibilities and boundaries
 
-| Concern | Responsible component | Boundary |
+| Concern | Responsibility | Boundary |
 | --- | --- | --- |
-| User workflows and presentation | React frontend | Does not access the database or write application files directly. |
-| Validation and operation coordination | Node.js backend | Owns decisions about persistence and destructive changes; returns visible errors rather than silently falling back. |
-| Structured metadata and saved layout | SQLite via backend | Not a public interface and not a detailed schema contract. |
-| Board/card content and media bytes | Local file storage via backend | Files remain distinct from metadata; referenced media is not deleted as a side effect of removing a card. |
-| Tag filtering | Frontend presentation backed by current board/card data | All selected tags must match; filtering changes visibility only, not saved membership or layout. |
-| PDF/DOCX reading | Simulated reader behavior in the application | No real format parsing, extraction, indexing, or document intelligence. |
+| Runtime and workspace | Obsidian | Hosts the plugin and owns the desktop workspace. |
+| Canvas rendering and saved layout | Obsidian Canvas, coordinated by Stow | Boards remain native `.canvas` files; Stow filtering must not change saved membership or layout. |
+| Board and card workflows | Stow plugin | Coordinates user actions and vault changes; does not replace the host's storage or synchronization behavior. |
+| Durable board state | Canvas files in the vault | Board membership and layout are represented by native Canvas data. |
+| Durable card content and tags | Markdown notes in the vault | Card text, links, media references, and tags remain readable and editable in Obsidian. |
+| Media bytes | Vault files | Existing assets are referenced in place; imported assets live in `/stow/files`; removal of references does not remove assets. |
+| Tag filtering | Stow's active-board view | All selected tags must match; filtering changes visibility only. |
 
 ## Data flow
 
-1. **Start and select a board:** The frontend requests the available boards from the backend. The backend reads board metadata and associated content, then returns the selected board's current state. Only one board is active in the UI at a time.
-2. **Create or edit a card:** The frontend submits the user's changes to the backend. The backend validates the target and any generated filenames, saves the card content and metadata, and updates the board/card relationship. Existing files are not silently overwritten.
-3. **Add media:** The backend checks that the selected file is supported and accessible. Existing local media is referenced in place. An imported file is copied into the application's media folder; a same-name conflict is reported and requires the user to rename the new file. The card content stores a reference, not the binary data.
-4. **Edit tags and filter:** Tag changes are saved for the selected card. Filtering applies an all-selected-tags match to the active board's current card data. Clearing the filter restores visibility without writing a board change.
-5. **Remove a card or media reference:** The user explicitly identifies and confirms the removal action. The backend removes the card's board membership and associated note as applicable, but retains media files. Removing a media reference changes the card content only.
-6. **Simulated document reading:** The user opens a PDF or DOCX item in the UI. The application presents simulated reading behavior and does not claim to read or extract the actual document.
-7. **Refresh after external file changes:** When the application reloads or refreshes local state, missing or renamed references are surfaced to the user. The backend does not substitute another file or alter unrelated content.
+1. **Discover and open boards:** Stow finds Canvas files under `/stow`, presents them by name, and opens the selected board as the active board using Obsidian's Canvas experience.
+2. **Create a board:** Stow creates a Canvas file under `/stow` without overwriting an existing file or folder. Board data remains in the vault.
+3. **Create or edit a card:** Stow creates or updates a standalone Markdown note in `/stow/cards` and associates it with a native Canvas file-card node. Edits made directly in Obsidian are reflected when Stow refreshes or reopens the board. Content edits do not change unrelated nodes or layout.
+4. **Add media:** Stow validates that selected media is supported and accessible. Existing vault assets are linked in place; supported files selected from the file system are copied to `/stow/files` and referenced from the card note. A filename conflict is surfaced without overwriting either file.
+5. **Edit tags and filter:** Stow saves a card's tag changes in that card's note. It filters the active board using an all-selected-tags match. Clearing or changing boards does not persist filtering as a Canvas membership or layout change.
+6. **Remove content:** An explicit card Remove action deletes that card's Canvas node and Markdown note while retaining its media. Removing a media reference changes the note only; the referenced file remains.
+7. **Refresh references:** On opening or refreshing a board, Stow identifies missing or renamed note and media references. It does not silently substitute files or modify unrelated content.
 
 ## Cross-cutting requirements
 
-- **Data integrity:** Prevent silent overwrites and unintended deletion of existing files, unrelated cards, and saved layout. Name conflicts and inaccessible or unsupported files must be explicitly reported. Card removal is the deliberate exception for the selected card note and its board membership; its media remains.
-- **Readable content:** Keep card content in a user-readable file format and media in separate files, consistent with the feature spec's note-and-reference model. Exact file-format compatibility with Obsidian is not guaranteed by this standalone architecture.
-- **Local-only operation:** No login, roles, remote persistence, object storage, or separate synchronization/sharing controls.
-- **Performance observations:** Retain the feature spec's exploratory targets: board usable within 3 seconds for the 100-card fixture, and applying or clearing a tag filter within 500 milliseconds. These are observations, not release gates; record the machine, OS, fixture, and timings.
-- **Test quality:** Unit-testable in-scope production logic targets 100% function coverage, with statement/line and branch coverage also reported. Document the coverage tool and exclusions.
-- **Desktop validation:** Smoke-test the agreed cases on the latest macOS, Windows, and Ubuntu releases and the latest Obsidian desktop version if Obsidian interoperability remains in scope. Record the actual environment versions used.
+- **Data integrity:** No silent overwrites or unintended deletion of existing notes, media, unrelated Canvas nodes, or layout. Conflicts and unsupported or inaccessible files are reported. Card removal is explicit and identifies the card being removed.
+- **Obsidian interoperability:** Boards remain native Canvas files; card notes remain readable and editable Markdown files; supported images and animated GIFs remain usable in Obsidian when Stow is disabled.
+- **Vault ownership:** Stow-managed files remain subject to the current vault's storage, synchronization, and sharing behavior. Stow adds no separate settings for these.
+- **Performance observations:** For the specified 100-card fixture, record whether a board becomes usable within 3 seconds and whether applying or clearing a tag filter completes within 500 milliseconds. These are exploratory targets, not release gates; record the machine, OS, Obsidian version, fixture, and timing events.
+- **Test quality:** In-scope, unit-testable production logic targets 100% function coverage. Also report statement/line and branch coverage, documenting the coverage tool and exclusions.
+- **Desktop compatibility:** Validate all agreed smoke-test cases on the latest macOS, Windows, and Ubuntu releases and the latest Obsidian desktop version available at validation time. Record the versions used.
 
 ## Key architecture decisions
 
 | ID | Decision | Rationale and traceability |
 | --- | --- | --- |
-| D-01 | Use React for the user interface and Node.js for local application behavior. | Required MVP constraints. Supports the board/card workflows in FR-01 through FR-09 without adding a remote service. |
-| D-02 | Use SQLite for structured metadata and keep user-facing content and media as local files. | Required MVP constraints; follows the separation between standalone card notes and media in FR-03, FR-06, and FR-10, while replacing vault storage. |
-| D-03 | Keep application data in a local application-managed folder, organized into board, card, and media locations. | Required MVP constraint; aligns conceptually with A-02 and AC-10.1–10.3. Exact path and file formats need confirmation because the source spec places these files in an Obsidian vault. |
-| D-04 | Treat board layout and tag filtering as separate: saved layout is durable, while filtering is a view operation. | Preserves FR-02 and FR-08, particularly AC-02.2–02.3 and AC-08.2–08.4. |
-| D-05 | Never silently overwrite files; retain media when removing cards or references. | Preserves FR-05, FR-06, and FR-09, and NFR-03. |
-| D-06 | Simulate PDF/DOCX reading rather than implement document parsing. | Required MVP constraint. Real document reading is not specified in the source feature specification and is intentionally not inferred from its media requirements. |
-| D-07 | Do not add authentication or role-based access control. | Required MVP constraint, consistent with the individual-user assumption A-01. |
+| D-01 | Implement Stow as an Obsidian desktop plugin, using Obsidian's workspace and Canvas experience. | Matches the product context, access model, and native board/card behavior in FR-01–FR-04; A-01, A-03, and A-08. |
+| D-02 | Use normal vault files as the durable source of board, card, and media content; do not introduce a separate application database or storage service. | Matches FR-03, FR-06, and FR-10; AC-03.3, AC-06.6, AC-10.1–10.4; A-02 and A-04. |
+| D-03 | Store boards, card notes, and imported media under `/stow`, `/stow/cards`, and `/stow/files`, respectively. | Matches FR-01, FR-03, and FR-06; AC-01.6, AC-03.1, and AC-06.3; A-02. |
+| D-04 | Keep filtering separate from persisted Canvas board membership and layout. | Matches FR-08 and AC-08.2–08.4; preserves the saved layout guarantees in FR-02. |
+| D-05 | Never silently overwrite files; retain media when removing cards or references. | Matches FR-05, FR-06, and FR-09; NFR-03 and A-05–A-06. |
 
 ## Assumptions and decisions for human review
 
-- **H-01 — Product boundary:** Confirm that the requested standalone React/Node application supersedes the feature spec's Obsidian desktop plugin context (A-01, A-08). Without an Obsidian runtime, the architecture cannot provide the spec's command/sidebar integration.
-- **H-02 — Canvas interoperability:** Confirm whether native `.canvas` files and native, resizable Obsidian file cards are still required (FR-01, FR-02, FR-03; A-03). The proposed standalone rendering and SQLite-backed layout do not, by themselves, satisfy native Canvas interoperability.
-- **H-03 — Storage and file compatibility:** Confirm that local application-folder storage replaces files in the current vault, including the `/stow`, `/stow/cards`, and `/stow/files` locations (FR-10; A-02, A-04). Also confirm whether Markdown notes must remain directly editable in Obsidian without Stow (AC-03.3, A-03).
-- **H-04 — Simulated reading scope:** Define what users should see when they use simulated PDF/DOCX reading. The source feature spec does not define document-reading behavior, so this architecture makes no assumption about simulated output or interaction.
-- **H-05 — Generated card filename collision:** The feature spec leaves the response to a timestamp-based note filename collision open (OQ-01; A-13). Confirm a non-destructive resolution before finalizing the persistence behavior.
-- **H-06 — External media import:** The feature spec draft assumes importing a copy into the application folder while leaving the external original intact (OQ-02; AC-06.3). Confirm that assumption for this local application.
-- **H-07 — Data-folder location and recovery:** Confirm the exact application data-folder location and whether users need export, backup, or recovery behavior. These are not specified in the feature spec or MVP constraints.
-- **H-08 — Platform compatibility scope:** The feature spec names latest desktop Obsidian alongside macOS, Windows, and Ubuntu (NFR-04, A-11). Confirm whether Obsidian compatibility still applies to the standalone app, or whether validation should cover only those desktop operating systems.
+- **H-01 — Card filename collision:** The feature spec leaves unresolved what to do when a generated timestamp-based note filename already exists (OQ-01; A-13). Confirm the non-destructive user resolution.
+- **H-02 — External media import:** The feature spec draft assumes copying external media into `/stow/files` while leaving the original intact (OQ-02; AC-06.3). Confirm this assumption.
+- **H-03 — Obsidian compatibility baseline:** Confirm the Obsidian desktop version available for validation and record the version used, consistent with NFR-04 and A-11.
 
 ## Traceability
 
-The feature specification remains the source of product behavior. Relevant requirement groups are:
-
-- Board selection, creation, and switching: FR-01; AC-01.1–01.6.
-- Board navigation, resizing, and saved layout: FR-02; AC-02.1–02.3.
+- Board discovery, creation, and switching: FR-01; AC-01.1–01.6.
+- Native Canvas navigation, resizing, and layout: FR-02; AC-02.1–02.3.
 - Note-backed card creation and editing: FR-03–FR-04; AC-03.1–03.4 and AC-04.1–04.4.
 - Explicit removal and media handling: FR-05–FR-06; AC-05.1–05.3 and AC-06.1–06.8.
 - Freeform tags and all-selected-tags filtering: FR-07–FR-08; AC-07.1–07.4 and AC-08.1–08.6.
-- Missing/renamed files and safe operations: FR-09; AC-09.1–09.3.
-- Local storage divergence: FR-10; AC-10.1–10.4, subject to human review under H-03.
-- Performance, coverage, integrity, and desktop support: NFR-01–NFR-04.
+- Missing/renamed files and safe handling: FR-09; AC-09.1–09.3.
+- Vault storage and sharing behavior: FR-10; AC-10.1–10.4.
+- Performance, coverage, integrity, and desktop compatibility: NFR-01–NFR-04.
