@@ -23,7 +23,7 @@ Depends on Epic 00's note-backed card validation and Epic 01's active-board work
 
 **Acceptance criteria:**
 
-- **Given** an active board, **when** the user creates a card with a title and initial text, **then** Stow creates a standalone Markdown note in `/stow/cards` and a native Canvas file card that references it.
+- **Given** an active board, **when** the user creates a card with a title and initial text, **then** Stow creates a standalone Markdown note named `YYYY-MM-DD-HHmm-stow.md` in `/stow/cards` using 24-hour local time and a native Canvas file card that references it.
 - **Given** a note path already exists, **when** the user creates a card with a conflicting title/path, **then** Stow does not overwrite the existing note and offers a non-destructive resolution.
 - **When** the board is reopened in Obsidian, **then** the card remains a normal resizable Canvas file card and opens the correct note.
 
@@ -49,11 +49,11 @@ Depends on Epic 00's note-backed card validation and Epic 01's active-board work
 
 ## Unit Tests
 
-Add unit tests for `/stow/cards` note creation/content updates, safe path conflict handling, Canvas node creation/removal, media retention, and preservation of unrelated Canvas data and geometry. Include cases for missing notes and renamed references based on Epic 00 findings. Target 100% function coverage for in-scope, unit-testable card/Canvas logic; report statement/line and branch coverage separately and use Jest if compatible with the chosen setup.
+Add unit tests for `/stow/cards` note creation, timestamp filename generation, content updates, safe path conflict handling, Canvas node creation/removal, media retention, and preservation of unrelated Canvas data and geometry. Include cases for missing notes and renamed references based on Epic 00 findings. Target 100% function coverage for in-scope, unit-testable card/Canvas logic; report statement/line and branch coverage separately and use Jest if compatible with the chosen setup.
 
 ## Manual Validation
 
-1. Create a card and verify both the `.md` note and Canvas file card exist.
+1. Create a card and verify the `.md` note uses the timestamp filename pattern and the Canvas file card references it.
 2. Open and edit the note directly in Obsidian; verify the card reflects the change after refresh/reopen.
 3. Edit the card in Stow; verify the standalone Markdown remains valid and Canvas geometry is unchanged.
 4. Click Remove and verify the Canvas node and card note are deleted while linked and uploaded media files remain.
@@ -61,7 +61,6 @@ Add unit tests for `/stow/cards` note creation/content updates, safe path confli
 
 ## Open Decisions
 
-- Card note folder and filename rules.
 - Which Markdown fields are part of the initial card editor versus edited only in Obsidian.
 - Conflict behavior if a note is edited in both places before either view refreshes.
-- Card-note filename rules and behavior if the filename already exists in `/stow/cards`.
+- Behavior if the generated timestamp filename already exists in `/stow/cards`.

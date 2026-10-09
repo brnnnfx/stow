@@ -23,7 +23,7 @@ The intended target users are individuals who use Obsidian. The project owner, w
 ## Boards and card model
 
 - A board is an Obsidian Canvas file (`.canvas`). Stow should support multiple boards, with one board open at a time.
-- A card is a native, resizable Canvas file card that references its own standalone Markdown note.
+- A card is a native, resizable Canvas file card that references its own standalone Markdown note named `YYYY-MM-DD-HHmm-stow.md` using 24-hour local time (for example, `2026-10-08-2142-stow.md`). A timestamp collision remains an open behavior decision.
 - The Canvas file owns board layout, including card placement and size. The Markdown note owns the card's content and should remain readable and editable in Obsidian without Stow.
 - Stow creates or reuses `/stow` at the vault root when installed. Canvas boards are stored directly in `/stow`, card notes in `/stow/cards`, and files uploaded through Stow in `/stow/files`.
 - Stow uses Obsidian Vault's existing storage, synchronization, and sharing behavior. It does not manage these options separately.
@@ -53,14 +53,13 @@ Likely implementation areas include the board/card interface, card content and m
 ## Constraints and open decisions
 
 - The initial scope is an Obsidian desktop plugin only, targeting the latest macOS and Windows releases and the latest Ubuntu release available at validation time.
+- Only the latest Obsidian desktop version is supported, with no backward-compatibility support. As of 2026-10-08, that version is 1.13.7.
 - Canvas files and standalone Markdown notes are the selected storage direction for the initial POC; the interoperability spike should validate that Stow can update note content without damaging Canvas layout.
 - Stow is opened from an Obsidian command or sidebar.
 - Card removal uses an explicit Remove action, deletes the Canvas node and card note, and retains media files.
 - Files uploaded through Stow are placed in `/stow/files` with their original names. A filename collision must be reported; the user is prompted to rename the new file. Existing vault media is linked rather than duplicated. Whether an upload keeps the original outside-vault file as well as a vault copy remains open.
 - Storage, synchronization, and sharing use the existing Obsidian Vault behavior; Stow does not manage these settings.
 - Tag representation (inline tags or frontmatter) is undecided. Multiple selected tags match all selected tags, and nonmatching cards are hidden without changing the Canvas file.
-- Minimum Obsidian version paired with the supported operating systems is undecided.
-- The specific desktop hardware used for performance measurements is undecided.
-- Provisional performance targets are a usable 100-card board within 3 seconds of selection and tag-filter updates within 500 milliseconds; both need validation on an agreed reference desktop.
+- Exploratory performance targets are to observe 100-card board readiness within 3 seconds and tag-filter updates within 500 milliseconds. They are not release gates; record the actual machine and environment used rather than preselecting a reference desktop.
 - Search and theme support are later priorities; their exact scope is undecided.
 - The plugin's internal architecture is undecided.

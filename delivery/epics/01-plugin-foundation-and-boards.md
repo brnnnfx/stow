@@ -24,9 +24,10 @@ Depends on Epic 00's supported Canvas integration findings. Card authoring, medi
 
 **Acceptance criteria:**
 
-- **Given** a compatible Obsidian desktop installation, **when** Stow is installed and enabled, **then** Obsidian loads it without a startup error.
+- **Given** the latest Obsidian desktop version on a supported OS, **when** Stow is installed and enabled, **then** Obsidian loads it without a startup error. Older Obsidian versions are not supported.
 - **Given** Stow is enabled, **when** the user invokes its documented entry point, **then** the board workflow opens and reports actionable errors if no usable board is available.
 - The minimum Obsidian version and supported desktop operating systems are recorded before release.
+- The Obsidian version and OS release used in each validation run are recorded. As of 2026-10-08, the latest Obsidian version is 1.13.7.
 
 ### 01.2 Create and find boards
 
@@ -56,7 +57,7 @@ Add unit tests for `/stow` setup, board discovery, board path validation, create
 
 ## Manual Validation
 
-1. Enable Stow in the latest macOS, Windows, and Ubuntu Obsidian desktop environments and invoke it from the command and sidebar.
+1. Enable Stow on the latest macOS, Windows, and Ubuntu releases using the latest Obsidian desktop version, then invoke it from the command and sidebar.
 2. Verify `/stow` is created at the vault root without replacing pre-existing files or folders.
 3. Create two boards and verify both are stored directly in `/stow` and visible in Obsidian file management.
 4. Open each board in turn and verify only the selected board is active in Stow.
@@ -65,5 +66,4 @@ Add unit tests for `/stow` setup, board discovery, board path validation, create
 
 ## Open Decisions
 
-- Minimum supported Obsidian version for the latest macOS, Windows, and Ubuntu releases.
 - Whether board selection persists between Stow sessions.

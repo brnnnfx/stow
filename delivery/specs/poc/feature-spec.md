@@ -76,11 +76,11 @@ The active board must retain native Canvas behavior: the user can navigate acros
 
 ### FR-03: Create a note-backed card
 
-Stow must create a standalone Markdown note in `/stow/cards` and a corresponding native Canvas file card for each new card.
+Stow must create a standalone Markdown note in `/stow/cards` and a corresponding native Canvas file card for each new card. The note filename uses the pattern `YYYY-MM-DD-HHmm-stow.md`, where `HHmm` is 24-hour local time; for example, `2026-10-08-2142-stow.md`.
 
 **Acceptance criteria:**
 
-- **AC-03.1** Given an active board, when the user creates a card with a title and initial text, then Stow creates a Markdown note in `/stow/cards` and a native Canvas file card that opens that note.
+- **AC-03.1** Given an active board, when the user creates a card with a title and initial text, then Stow creates a Markdown note in `/stow/cards` named with the `YYYY-MM-DD-HHmm-stow.md` pattern and a native Canvas file card that opens that note.
 - **AC-03.2** Given the requested note path already exists, when the user creates a card, then Stow does not overwrite the existing note and presents a non-destructive resolution.
 - **AC-03.3** Given a card is created, when the user opens its note directly in Obsidian with Stow unavailable, then its Markdown content is readable and editable.
 - **AC-03.4** Given a new card is added to a board, when the board is reopened, then the card remains a native, resizable Canvas file card referencing the same note.
@@ -169,11 +169,11 @@ Stow-managed boards, card notes, and uploaded files must be normal files in the 
 
 ## 5. Non-Functional Requirements
 
-### NFR-01: Board and filter responsiveness (provisional)
+### NFR-01: Exploratory board and filter responsiveness
 
-- On the agreed reference desktop, a test vault containing 100 card notes (each with a title, up to 200 characters of text, and up to three tags) must present a usable active board within **3 seconds** of selecting the board.
-- On the same fixture, applying or clearing a tag filter must update visible-card results within **500 milliseconds**.
-- The reference desktop and exact timing start/end events must be recorded before performance results are treated as release evidence. These thresholds are proposed for review.
+- For a test vault containing 100 card notes (each with a title, up to 200 characters of text, and up to three tags), record whether the active board becomes usable within **3 seconds** of selection.
+- On the same fixture, record whether applying or clearing a tag filter updates visible-card results within **500 milliseconds**.
+- These are exploratory POC targets, not pass/fail or release gates. No reference machine must be selected in advance; record the actual machine, OS, Obsidian version, fixture, and timing start/end events when measurements are made.
 
 ### NFR-02: Unit function coverage
 
@@ -188,7 +188,8 @@ Stow-managed boards, card notes, and uploaded files must be normal files in the 
 
 ### NFR-04: Desktop compatibility
 
-- The POC must pass **100% of the agreed smoke-test cases** on the latest macOS and Windows releases and the latest Ubuntu release available at validation time.
+- The POC must pass **100% of the agreed smoke-test cases** on the latest macOS and Windows releases, the latest Ubuntu release, and the latest Obsidian desktop version available at validation time.
+- No backward compatibility with older Obsidian versions is required. As of 2026-10-08, the latest Obsidian version is 1.13.7.
 - The exact OS and Obsidian versions used for each validation run must be recorded.
 
 ## 6. Acceptance Criteria Traceability
@@ -224,11 +225,10 @@ Each remaining item is assigned to the project owner for confirmation.
 - **A-08:** Stow is accessed through an Obsidian command and sidebar. **Owner:** [Project owner]
 - **A-09:** Search, advanced theming, and mobile support are deferred. **Owner:** [Project owner]
 - **A-10:** Unit function coverage is 100% for in-scope, unit-testable production logic. **Owner:** [Project owner]
-- **A-11:** Supported validation platforms are the latest macOS, Windows, and Ubuntu releases available at test time. **Owner:** [Project owner]
-- **A-12:** The 100-card/3-second and 500-millisecond filter targets are provisional until evaluated on an agreed reference desktop. **Owner:** [Project owner]
+- **A-11:** Supported validation platforms are the latest macOS, Windows, and Ubuntu releases and the latest Obsidian desktop version available at test time; older Obsidian versions are not supported. As of 2026-10-08, the latest Obsidian version is 1.13.7. **Owner:** [Project owner]
+- **A-12:** Performance targets are exploratory observations, not release gates; record the machine and environment used for any measurement. **Owner:** [Project owner]
+- **A-13:** New card notes use the `YYYY-MM-DD-HHmm-stow.md` filename pattern with 24-hour local time. **Owner:** [Project owner]
 
 ### Open questions
 
-- **OQ-01:** What filename should Stow use for a new card note, and what should happen when that card-note name already exists in `/stow/cards`? **Owner:** [Project owner]
-- **OQ-02:** Which specific computer should be the reference desktop for measuring the provisional 3-second board-open and 500-millisecond filter targets? For example, identify a machine you use or authorize a current desktop as the baseline. **Owner:** [Project owner]
-- **OQ-03:** Which Obsidian desktop version should be tested on the latest macOS, Windows, and Ubuntu releases? **Owner:** [Project owner]
+- **OQ-01:** What should Stow do if a generated timestamp filename already exists in `/stow/cards`, for example if two cards are created in the same minute? **Owner:** [Project owner]
